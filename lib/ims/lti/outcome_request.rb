@@ -41,7 +41,8 @@ module IMS::LTI
 
     attr_accessor :operation, :score, :outcome_response, :message_identifier,
                   :lis_outcome_service_url, :lis_result_sourcedid,
-                  :consumer_key, :consumer_secret, :post_request
+                  :consumer_key, :consumer_secret, :post_request,
+                  :lti_launch_url
 
     # Create a new OutcomeRequest
     #
@@ -75,9 +76,10 @@ module IMS::LTI
     # POSTs the given score to the Tool Consumer with a replaceResult
     #
     # @return [OutcomeResponse] The response from the Tool Consumer
-    def post_replace_result!(score)
+    def post_replace_result!(score, extension_params = {})
       @operation = REPLACE_REQUEST
       @score = score
+      @lti_launch_url = extension_params[:lti_launch_url]
       post_outcome_request
     end
 
@@ -191,7 +193,8 @@ module IMS::LTI
       return unless has_result_data?
 
       node.result do |res|
-        result_values(res)
+        result_values(res) if score && !score.to_s.empty?
+        extension_values(res)
       end
     end
 
@@ -210,6 +213,14 @@ module IMS::LTI
         node.resultScore do |res_score|
           res_score.language "en" # 'en' represents the format of the number
           res_score.textString score.to_s
+        end
+      end
+    end
+
+    def extension_values(node)
+      if lti_launch_url
+        node.resultData do |res_data|
+          res_data.ltiLaunchUrl lti_launch_url
         end
       end
     end
