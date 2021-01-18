@@ -189,8 +189,12 @@ module IMS::LTI
       false
     end
 
+    def has_extension_data?
+      !!lti_launch_url
+    end
+
     def results(node)
-      return unless has_result_data?
+      return unless has_result_data? || has_extension_data?
 
       node.result do |res|
         result_values(res) if score && !score.to_s.empty?
